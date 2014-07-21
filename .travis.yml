@@ -1,10 +1,8 @@
-language: node_js
-node_js:
-  - '0.8'
-  - '0.10'
-before_script:
-  - 'npm install -g bower grunt-cli'
-  - 'bower install'
-branches:
-  only:
-    - gh-pages
+deploy:
+  provider: heroku
+  api_key:
+    secure: hdRLn71vZKOS8X8l1lSCMWXz9mb+NdGE1zLkH0zbCoDcsgJQbWGsHdLcwNIhuMCg/L1nItTMZ4Azt3ydREK7DlD6pVl2WBdQ+vcM8ABWenVHqbEXhWPAerFlzrStFZvucauAN0gKXsiDEtQZwIsh5Z5/xkLA/F8rMBB+8uGzVEg=
+  app: angular-meta
+  on:
+    repo: Moonfuse/angular-meta
+    branch: master

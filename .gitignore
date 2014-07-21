@@ -1,5 +1,19 @@
 node_modules
-dist
-.tmp
+bin
 .sass-cache
-app
+bower_components
+
+# Logs and databases #
+######################
+*.log
+*.sql
+
+# OS generated files #
+######################
+.DS_Store*
+ehthumbs.db
+.idea
+Icon?
+!icons
+Thumbs.db
+._*

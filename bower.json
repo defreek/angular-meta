@@ -1,4 +1,22 @@
 {
   "name": "angular-meta",
-  "version": "0.2.0"
+  "main": "angular-meta.js",
+  "version": "0.2.0",
+  "authors": [
+    "Jason Pescione <jay@moonfuse.co>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "app"
+  ],
+  "devDependencies": {
+    "angular": "~1.2.14",
+    "angular-route": "~1.2.14"
+  }
 }
+
