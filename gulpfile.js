@@ -1,5 +1,5 @@
-var gulp = require('gulp');
-var plugins = require("gulp-load-plugins")({lazy:false});
+var gulp    = require('gulp')
+  , plugins = require('gulp-load-plugins')({lazy:false});
 
 gulp.task('scripts', function(){
     //combine all js files of the app
@@ -41,15 +41,15 @@ gulp.task('vendorCSS', function(){
 });
 
 gulp.task('copy-index', function() {
-    gulp.src('./app/index.html')    
+    gulp.src('./app/index.html')
         .pipe(gulp.dest('./build'));
 });
 
 gulp.task('watch',function(){
     gulp.watch([
-        'build/**/*.html',        
+        'build/**/*.html',
         'build/**/*.js',
-        'build/**/*.css'        
+        'build/**/*.css'
     ], function(event) {
         return gulp.src(event.path)
             .pipe(plugins.connect.reload());
@@ -66,5 +66,10 @@ gulp.task('connect', plugins.connect.server({
     port: 9000,
     livereload: true
 }));
+
+gulp.task('test', function() {
+  return gulp.src('tests/**/*.js', {read: false})
+        .pipe(plugins.mocha({ reporter: 'nyan' }));
+});
 
 gulp.task('default',['connect','scripts','templates','css','copy-index','vendorJS','vendorCSS','watch']);

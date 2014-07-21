@@ -2,6 +2,7 @@ node_modules
 bin
 .sass-cache
 bower_components
+build
 
 # Logs and databases #
 ######################
