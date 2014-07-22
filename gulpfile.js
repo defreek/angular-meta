@@ -45,6 +45,13 @@ gulp.task('copy-index', function() {
         .pipe(gulp.dest('./build'));
 });
 
+gulp.task('copy-service', function() {
+    gulp.src('./angular-meta.js')
+        // .pipe(plugins.jshint())
+        // .pipe(plugins.jshint.reporter('default'))
+        .pipe(gulp.dest('./build'));
+});
+
 gulp.task('watch',function(){
     gulp.watch([
         'build/**/*.html',
@@ -58,7 +65,7 @@ gulp.task('watch',function(){
     gulp.watch(['!./app/index.html','./app/**/*.html'],['templates']);
     gulp.watch('./app/**/*.css',['css']);
     gulp.watch('./app/index.html',['copy-index']);
-
+    gulp.watch('./angular-meta.js',['copy-service']);
 });
 
 gulp.task('connect', plugins.connect.server({
@@ -68,8 +75,10 @@ gulp.task('connect', plugins.connect.server({
 }));
 
 gulp.task('test', function() {
-  return gulp.src('tests/**/*.js', {read: false})
+  // Run unit tests.
+  return gulp.src('tests/unit/**/*.js', {read: false})
         .pipe(plugins.mocha({ reporter: 'nyan' }));
+  // @todo run web tests.
 });
 
-gulp.task('default',['connect','scripts','templates','css','copy-index','vendorJS','vendorCSS','watch']);
+gulp.task('default',['connect','scripts','templates','css','copy-index','copy-service','vendorJS','vendorCSS','watch']);
