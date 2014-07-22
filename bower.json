@@ -6,13 +6,21 @@
     "Jason Pescione <jay@moonfuse.co>"
   ],
   "license": "MIT",
+  // "ignore": ["./!(./dist/angular-meta.js)"],
   "ignore": [
     "**/.*",
+    "gulpfile.js",
+    "package.json",
     "node_modules",
     "bower_components",
-    "test",
     "tests",
-    "app"
+    "app",
+    "src",
+    "dist/*.css",
+    "dist/*.html",
+    "dist/app.js",
+    "dist/lib.js",
+    "dist/templates.js",
   ],
   "devDependencies": {
     "angular": "~1.2.14",

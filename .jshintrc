@@ -19,5 +19,25 @@
     "laxcomma": true,
     "quotmark": true,
     "undef": false,
-    "unused": false
+    "unused": false,
+    "globals": {
+      "angular": false,
+      "describe": false,
+      "it": false,
+      "before": false,
+      "beforeEach": false,
+      "after": false,
+      "afterEach": false,
+      "Drupal": false,
+      "jQuery": false,
+      "window": false,
+      "document": false,
+      "Swipe": false,
+      "FastClick": false,
+      "Spinner": false,
+      "_": false,
+      "google": false,
+      "position": false,
+      "responsiveNav": false
+    }
 }

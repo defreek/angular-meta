@@ -3,8 +3,9 @@
 angular.module('meta', [])
 .provider('Meta', function() {
 
-  var self = this;
+  var self   = this;
   var routes = {};
+  var router = '';
   var otherwise = {
     title: '',
     description: ''
@@ -83,16 +84,26 @@ angular.module('meta', [])
 
   /**
    * Update rootScope w/ the current meta info.
-   * @param  {object} $rootScope
-   * @param  {object} $location
+   * @param {string} router 'ng' or 'ui'
+   * @param {object} $rootScope
+   * @param {object} $location
+   * @return {object} this
    */
-  var update = function($rootScope, $location) {
-    var info = getInfo( $location.path() );
-    $rootScope.meta = info;
-    $rootScope.meta.title = options.prefix + info.title + options.suffix;
-    // Emit event so applications have the option of setting
-    // DOM flags for headless browsers rendering the page for SEO.
-    $rootScope.$emit('metaUpdated', info);
+  var update = function(router, $rootScope, $location) {
+    var info = null;
+
+    if (router === 'ng')
+      info = getInfo( $location.path() );
+
+    if (router === 'ui')
+      info = getInfo( $location.path() );
+
+    if (info) {
+      $rootScope.meta = info;
+      $rootScope.meta.title = options.prefix + info.title + options.suffix;
+      $rootScope.$emit('metaUpdated');
+    }
+    return self;
   };
 
   /**
@@ -108,6 +119,23 @@ angular.module('meta', [])
       }
     }
     return obj;
+  };
+
+  /**
+   * Detect if the app is using ui-router or ngRoute.
+   * @return {string|null} 'ng', 'ui', or false
+   */
+  var detectRouter = function($injector) {
+    var router = null;
+    try {
+      if (!router && $injector.get('$route')) router = 'ng';
+    }
+    catch (e) {}
+    try {
+      if (!router && $injector.get('$state')) router = 'ui';
+    }
+    catch (e) {}
+    return router;
   };
 
   /**
@@ -157,24 +185,30 @@ angular.module('meta', [])
 
   this.$get = ['$rootScope', '$location', '$injector',
   function($rootScope, $location, $injector) {
-
     return {
       init: function() {
-        try {
-          this.$state = $injector.get('$state');
-        }
-        catch (e) {
-          this.$state = false;
-        }
-        try {
-          this.$route = $injector.get('$route');
-        }
-        catch (e) {
-          this.$route = false;
+        // Declare empty object on $rootScope.
+        if ($rootScope.meta) {
+          throw 'angular-meta could not properly initalize. $rootScope.meta is already defined.';
         }
         $rootScope.meta = {};
-        if (this.$route) $rootScope.$on('$routeChangeSuccess', function() { update($rootScope, $location); });
-        if (this.$state) $rootScope.$on('$stateChangeSuccess', function() { update($rootScope, $location); });
+
+        // Detect application routing.
+        router = detectRouter($injector);
+        // Listen for changes to the routes, update the meta info,
+        // and trigger an event to the outside world.
+        if (router === 'ui') {
+          $rootScope.$on('$stateChangeSuccess', function() {
+            update(router, $rootScope, $location);
+          });
+        }
+
+        if (router === 'ng')  {
+          $rootScope.$on('$routeChangeSuccess', function() {
+            update(router, $rootScope, $location);
+          });
+        }
+
       },
       // Return current meta title and description.
       get: function() {
@@ -184,8 +218,7 @@ angular.module('meta', [])
       // later in execution.
       add: function(path, info) {
         self.when(path, info);
-        update($rootScope, $location);
-        return self;
+        return update(router, $rootScope, $location);
       }
     };
 

@@ -13,6 +13,7 @@
     "gulp-angular-templatecache": "^1.1.0",
     "gulp-connect": "^1.0.7",
     "gulp-mocha": "~0.5.1",
-    "should": "~4.0.4"
+    "should": "~4.0.4",
+    "gulp-clean": "~0.3.1"
   }
 }
