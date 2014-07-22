@@ -6,3 +6,8 @@ deploy:
   on:
     repo: Moonfuse/angular-meta
     branch: master
+
+before_script:
+  - npm install -g gulp
+  - npm install -g bower
+  - bower install
