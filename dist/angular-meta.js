@@ -51,7 +51,7 @@ var Parser = function(routes) {
    * @return {object}
    */
   this.getRouteInfo = function(currentRoute) {
-    var placeholders       = []
+    var placeholders       = {}
       , currentRoutePaths  = this._pathToArray(currentRoute);
 
     // Itterate through each route.
@@ -68,37 +68,46 @@ var Parser = function(routes) {
       for (var ii=0, length=paths.length; ii<length; ii+=1) {
         // If the route arg is a placeholder.
         if ( paths[ii].indexOf(':')  === 0 ) {
-          placeholders[ii] = paths[ii];
+          placeholders[ paths[ii] ] = currentRoutePaths[ii];
           continue;
         }
         // If the route does not match the location and
         // there is not a wildcard in the route.
         if ( paths[ii] !== currentRoutePaths[ii] && paths[ii].indexOf('*') === -1 ) {
           match = false;
-          placeholders = [];
+          placeholders = {};
           break;
         }
       }
 
-      if (match)
-        return this._interpolatePlaceholders(this._utils.clone(info), placeholders);
+      if (match) return this._replacePlaceholders(this._utils.clone(info), placeholders);
 
     }
 
   };
 
   /**
-   * Replaces all placeholder elements that begin w/ a ':'
-   * in an object.
-   * @param {object} info
+   * Replace all object values that contain a placeholder.
+   * Recursive function - will replace properties w/ object values.
+   * Will modify source object by reference. Be sure to clone if this
+   * behavior is undesired.
+   * @param {object} object
    * @param {object} placeholders key=placeholder, value=replacement
    * @return {object}
-   * @todo test to make sure placeholders are replaced in nested objects.
    */
-  this._interpolatePlaceholders = function(info, placeholders) {
-    if (!placeholders || !placeholders.length) return;
-
-    return info;
+  this._replacePlaceholders = function(object, placeholders) {
+    if (!placeholders || !Object.keys(placeholders).length) return object;
+    for (var property in object) {
+      if (!object.hasOwnProperty(property)) continue;
+      for (var placeholder in placeholders) {
+        var type = typeof object[property];
+        if (type === 'string')
+          object[property] = object[property].replace(placeholder, placeholders[placeholder]);
+        if (type === 'object')
+          object[property] = this._replacePlaceholders(object[property], placeholders);
+      }
+    }
+    return object;
   };
 
   /**

@@ -29,8 +29,12 @@
       })
       .when('/about/:test', function(done) {
         var result = {
-          title: 'About page title',
+          title: 'About :test title',
           description: 'About page description',
+          thing: {
+            a: 'this :test',
+            b: 'another test'
+          }
         };
         done( result );
       })
