@@ -20,7 +20,8 @@
     MetaProvider
       .options({
         prefix: 'Hello!',
-        suffix: ' | Demo site'
+        suffix: ' | Demo site',
+        uirouter: false
       })
       .when('/', {
         title: 'Angular Meta Demo',

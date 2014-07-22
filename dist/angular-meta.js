@@ -3,43 +3,42 @@
 angular.module('meta', [])
 .provider('Meta', function() {
 
-  var self   = this;
-  var routes = {};
-  var router = '';
+  var self      = this;
+  var routes    = {};
   var otherwise = {
     title: '',
     description: ''
   };
   var options = {
     prefix: '',
-    suffix: ''
+    suffix: '',
+    uirouter: false
+  };
+
+  var getInfoFromState = function(routes, $state) {
+
   };
 
   /**
    * Get meta info for a given route.
-   * @param  {string} location the url to get meta info for.
-   * @return {object} object w/ meta info.
+   * @param  {object} routes
+   * @param  {string} currentRoute
+   * @return {object}
    */
-  var getInfo = function(location) {
+  var getInfoFromRoute = function(routes, currentRoute) {
     var info        = {}
       , placeholder = [];
 
-    info = defaults( info, otherwise );
-
     // Split the location path into an array of args.
-    location = location.split('/').filter(Boolean);
+    currentRoute = currentRoute.split('/').filter(Boolean);
 
     // Itterate through each route added via the public when() method.
     var routeKeys = Object.keys(routes);
     for (var i = 0, len = routeKeys.length; i < len; i+=1) {
-      // Split the route into an array of args.
+      // Split the route into an array of route paths.
       var route = routeKeys[i].split('/').filter(Boolean);
 
-      // Matching routes need to have the same number of
-      // arguments as the location url.
-      if ( route.length !== location.length ) {
-        continue;
-      }
+      if (!route.length) continue;
 
       // Itterate through each route arg to check for a match.
       var match = true;
@@ -51,7 +50,7 @@ angular.module('meta', [])
         }
         // If the route does not match the location and
         // there is not a wildcard in the route.
-        if ( route[ii] !== location[ii] && route[ii].indexOf('*') === -1 ) {
+        if ( route[ii] !== currentRoute[ii] && route[ii].indexOf('*') === -1 ) {
           match = false;
           placeholder = [];
           break;
@@ -84,19 +83,20 @@ angular.module('meta', [])
 
   /**
    * Update rootScope w/ the current meta info.
-   * @param {string} router 'ng' or 'ui'
    * @param {object} $rootScope
-   * @param {object} $location
+   * @param {object} $injector
+   * @param {boolean} [uirouter]
    * @return {object} this
    */
-  var update = function(router, $rootScope, $location) {
+  var update = function($rootScope, $injector, uirouter) {
     var info = null;
 
-    if (router === 'ng')
-      info = getInfo( $location.path() );
-
-    if (router === 'ui')
-      info = getInfo( $location.path() );
+    if (uirouter) {
+      info = getInfoFromState(routes, $injector.get('$state'));
+    }
+    else {
+      info = getInfoFromRoute(routes, $injector.get('$location').path());
+    }
 
     if (info) {
       $rootScope.meta = info;
@@ -119,23 +119,6 @@ angular.module('meta', [])
       }
     }
     return obj;
-  };
-
-  /**
-   * Detect if the app is using ui-router or ngRoute.
-   * @return {string|null} 'ng', 'ui', or false
-   */
-  var detectRouter = function($injector) {
-    var router = null;
-    try {
-      if (!router && $injector.get('$route')) router = 'ng';
-    }
-    catch (e) {}
-    try {
-      if (!router && $injector.get('$state')) router = 'ui';
-    }
-    catch (e) {}
-    return router;
   };
 
   /**
@@ -183,8 +166,8 @@ angular.module('meta', [])
     return this;
   };
 
-  this.$get = ['$rootScope', '$location', '$injector',
-  function($rootScope, $location, $injector) {
+  this.$get = ['$rootScope', '$injector',
+  function($rootScope, $injector) {
     return {
       init: function() {
         // Declare empty object on $rootScope.
@@ -193,20 +176,18 @@ angular.module('meta', [])
         }
         $rootScope.meta = {};
 
-        // Detect application routing.
-        router = detectRouter($injector);
         // Listen for changes to the routes, update the meta info,
         // and trigger an event to the outside world.
-        if (router === 'ui') {
+        if (options.uirouter) {
           $rootScope.$on('$stateChangeSuccess', function() {
-            update(router, $rootScope, $location);
+            update($rootScope, $injector, options.uirouter);
           });
         }
-
-        if (router === 'ng')  {
+        else {
           $rootScope.$on('$routeChangeSuccess', function() {
-            update(router, $rootScope, $location);
+            update($rootScope, $injector, options.uirouter);
           });
+
         }
 
       },
@@ -218,7 +199,7 @@ angular.module('meta', [])
       // later in execution.
       add: function(path, info) {
         self.when(path, info);
-        return update(router, $rootScope, $location);
+        return update($rootScope, $injector, options.uirouter);
       }
     };
 
