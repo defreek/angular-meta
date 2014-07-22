@@ -4,7 +4,7 @@
   angular.module('angular-meta-about', ['ngRoute'])
     .config(function ($routeProvider) {
       $routeProvider
-        .when('/about', {
+        .when('/about/:whatever', {
           templateUrl: 'about/about.html',
           controller: 'AboutCtrl'
         });

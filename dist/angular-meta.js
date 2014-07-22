@@ -1,20 +1,140 @@
-;(function($, window, angular, undefined) {
+;(function(angular, undefined) {
 
-  'use strict';
+'use strict';
 
-  var Routeparser = (function() {
-  this.parser = 'parser';
-})();
-  var Stateparser = (function() {
+/**
+ * Constructor. use `new`.
+ */
+var Utils = function() {
 
-  this.parser = 'parser';
+  /**
+   * Adapted from underscorejs _.defaults() method.
+   * @param  {object} obj
+   * @return {object}
+   */
+  this.defaults = function(obj) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    for (var i=0, len=args.length; i<len; i+=1) {
+      for (var prop in args[i]) {
+        if (obj[prop] === void 0) obj[prop] = args[i][prop];
+      }
+    }
+    return obj;
+  };
 
-})();
-  angular.module('meta', [])
+  this.clone = function(obj) {
+    if(obj === null || typeof(obj) !== 'object') return obj;
+    var temp = obj.constructor(); // changed
+    for (var key in obj) temp[key] = this.clone(obj[key]);
+    return temp;
+  };
+
+};
+/**
+ * Constructor. use `new`.
+ * @param {array} routes
+ */
+var Parser = function(routes) {
+
+  var self = this;
+
+  /**
+   * Get meta info for a given state.
+   * @param  {string} currentState
+   * @return {object}
+   */
+  this.getStateInfo = function(currentState) {};
+
+  /**
+   * Get meta info for a given route.
+   * @param  {string} currentRoute
+   * @return {object}
+   */
+  this.getRouteInfo = function(currentRoute) {
+    var placeholders       = []
+      , currentRoutePaths  = this._pathToArray(currentRoute);
+
+    // Itterate through each route.
+    for (var i=0, len=this._routes.length; i<len; i+=1) {
+      // Split the route into an array of route paths.
+      var path  = this._routes[i].path;
+      var info  = this._routes[i].info;
+      var paths = this._pathToArray(path);
+
+      if (!paths.length) continue;
+
+      // Itterate through each route part to check for a match.
+      var match = true;
+      for (var ii=0, length=paths.length; ii<length; ii+=1) {
+        // If the route arg is a placeholder.
+        if ( paths[ii].indexOf(':')  === 0 ) {
+          placeholders[ii] = paths[ii];
+          continue;
+        }
+        // If the route does not match the location and
+        // there is not a wildcard in the route.
+        if ( paths[ii] !== currentRoutePaths[ii] && paths[ii].indexOf('*') === -1 ) {
+          match = false;
+          placeholders = [];
+          break;
+        }
+      }
+
+      if (match)
+        return this._interpolatePlaceholders(this._utils.clone(info), placeholders);
+
+    }
+
+  };
+
+  /**
+   * Replaces all placeholder elements that begin w/ a ':'
+   * in an object.
+   * @param {object} info
+   * @param {object} placeholders key=placeholder, value=replacement
+   * @return {object}
+   * @todo test to make sure placeholders are replaced in nested objects.
+   */
+  this._interpolatePlaceholders = function(info, placeholders) {
+    if (!placeholders || !placeholders.length) return;
+
+    return info;
+  };
+
+  /**
+   * Convert a path string into an array.
+   * @param  {string} path
+   * @return {array}
+   */
+  this._pathToArray = function(path) {
+    return path !== '/' ? path.split('/').filter(Boolean) : ['/'];
+  };
+
+  /**
+   * Order routes array by most specific to least specific.
+   * @param  {array} routes
+   * @return {object} this
+   */
+  this._normalizeRoutes = function(routes) {
+    routes.sort(function(a, b) {
+      return self._pathToArray(b.path).length - self._pathToArray(a.path).length;
+    });
+    return this;
+  };
+
+  // Class constructor.
+  (function() {
+    self._utils   = new Utils();
+    self._routes = routes;
+    self._normalizeRoutes(routes);
+  })();
+
+};
+angular.module('meta', [])
 .provider('Meta', function() {
 
   var self      = this;
-  var routes    = {};
+  var routes    = [];
   var otherwise = {
     title: '',
     description: ''
@@ -25,71 +145,7 @@
     uirouter: false
   };
 
-  var getInfoFromState = function(routes, $state) {
-
-  };
-
-  /**
-   * Get meta info for a given route.
-   * @param  {object} routes
-   * @param  {string} currentRoute
-   * @return {object}
-   */
-  var getInfoFromRoute = function(routes, currentRoute) {
-    var info        = {}
-      , placeholder = [];
-
-    // Split the location path into an array of args.
-    currentRoute = currentRoute.split('/').filter(Boolean);
-
-    // Itterate through each route added via the public when() method.
-    var routeKeys = Object.keys(routes);
-    for (var i = 0, len = routeKeys.length; i < len; i+=1) {
-      // Split the route into an array of route paths.
-      var route = routeKeys[i].split('/').filter(Boolean);
-
-      if (!route.length) continue;
-
-      // Itterate through each route arg to check for a match.
-      var match = true;
-      for (var ii = 0, length = route.length; ii < length; ii+=1) {
-        // If the route arg is a placeholder.
-        if ( route[ii].indexOf(':')  === 0 ) {
-          placeholder[ii] = route[ii];
-          continue;
-        }
-        // If the route does not match the location and
-        // there is not a wildcard in the route.
-        if ( route[ii] !== currentRoute[ii] && route[ii].indexOf('*') === -1 ) {
-          match = false;
-          placeholder = [];
-          break;
-        }
-      }
-
-      if (match) {
-        // We could simply set info = routes[ routeKeys[i] ]
-        // but this would cause reference problems that occur when
-        // replacing the placeholder values for the title and description.
-        // This is a safer, and native, alternative to cloning the object.
-        for ( var key in routes[ routeKeys[i] ] ) {
-          info[key] = routes[ routeKeys[i] ][key];
-        }
-        break;
-      }
-    }
-
-    // Replace placeholders in meta info and meta description strings.
-    if ( placeholder.length > 0 ) {
-      for (var placeholderKey in placeholder) {
-        for (var infoKey in info) {
-          info[infoKey] = info[infoKey].split(placeholder[placeholderKey]).join(location[placeholderKey]);
-        }
-      }
-    }
-
-    return info;
-  };
+  this._utils = new Utils();
 
   /**
    * Update rootScope w/ the current meta info.
@@ -100,12 +156,11 @@
    */
   var update = function($rootScope, $injector, uirouter) {
     var info = null;
-
     if (uirouter) {
-      info = getInfoFromState(routes, $injector.get('$state'));
+      info = this._parser.getStateInfo($injector.get('$state'));
     }
     else {
-      info = getInfoFromRoute(routes, $injector.get('$location').path());
+      info = this._parser.getRouteInfo($injector.get('$location').path());
     }
 
     if (info) {
@@ -117,27 +172,12 @@
   };
 
   /**
-   * Adapted from underscorejs _.defaults() method.
-   * @param  {object} obj
-   * @return {object}
-   */
-  var defaults = function(obj) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    for (var i=0, len=args.length; i<len; i+=1) {
-      for (var prop in args[i]) {
-        if (obj[prop] === void 0) obj[prop] = args[i][prop];
-      }
-    }
-    return obj;
-  };
-
-  /**
    * Set options.
    * @param  {object} opts
    * @return {object} this
    */
   this.options = function(opts) {
-    options = defaults( opts, options );
+    options = this._utils.defaults(opts, options);
     return this;
   };
 
@@ -155,7 +195,7 @@
         return self.when(path, done);
       });
     else
-      routes[path] = info;
+      routes.push({ path: path, info: info });
     return this;
   };
 
@@ -180,6 +220,10 @@
   function($rootScope, $injector) {
     return {
       init: function() {
+
+        // Initalize parser once all routes have been added.
+        self._parser = new Parser(routes);
+
         // Declare empty object on $rootScope.
         if ($rootScope.meta) {
           throw 'angular-meta could not properly initalize. $rootScope.meta is already defined.';
@@ -190,26 +234,25 @@
         // and trigger an event to the outside world.
         if (options.uirouter) {
           $rootScope.$on('$stateChangeSuccess', function() {
-            update($rootScope, $injector, options.uirouter);
+            update.call(self, $rootScope, $injector, options.uirouter);
           });
         }
         else {
           $rootScope.$on('$routeChangeSuccess', function() {
-            update($rootScope, $injector, options.uirouter);
+            update.call(self, $rootScope, $injector, options.uirouter);
           });
-
         }
 
       },
       // Return current meta title and description.
       get: function() {
-        return $rootScope.meta;
+        // return $rootScope.meta;
       },
       // Add additional meta info items, e.g. via controllers,
       // later in execution.
       add: function(path, info) {
-        self.when(path, info);
-        return update($rootScope, $injector, options.uirouter);
+        // self.when(path, info);
+        // return update($rootScope, $injector, options.uirouter);
       }
     };
 
@@ -219,4 +262,4 @@
 
 
 
-})(jQuery, window, angular);
+})(angular);

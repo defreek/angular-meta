@@ -1,9 +1,9 @@
-;(function($, window, angular, undefined) {
+;(function(angular, undefined) {
 
-  'use strict';
+'use strict';
 
-  //import("./routeparser.js");
-  //import("./stateparser.js");
-  //import("./provider.js");
+//import("./utils.js");
+//import("./parser.js");
+//import("./provider.js");
 
-})(jQuery, window, angular);
+})(angular);
