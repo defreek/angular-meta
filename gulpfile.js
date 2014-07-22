@@ -11,10 +11,10 @@ gulp.task('appJS', function(){
 });
 
 gulp.task('metaJS', function(){
-    gulp.src(['./src/**/*.js'])
+    gulp.src(['./src/angular-meta.js'])
+        .pipe(plugins.imports())
         .pipe(plugins.jshint())
         .pipe(plugins.jshint.reporter('default'))
-        .pipe(plugins.concat('angular-meta.js'))
         .pipe(gulp.dest('./dist'));
 });
 

@@ -1,16 +1,4 @@
-;(function($, window, angular, undefined) {
-
-  'use strict';
-
-  var Routeparser = (function() {
-  this.parser = 'parser';
-})();
-  var Stateparser = (function() {
-
-  this.parser = 'parser';
-
-})();
-  angular.module('meta', [])
+angular.module('meta', [])
 .provider('Meta', function() {
 
   var self      = this;
@@ -217,6 +205,3 @@
 
 });
 
-
-
-})(jQuery, window, angular);
