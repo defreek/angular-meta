@@ -39,18 +39,11 @@ var Parser = function(routes) {
   var self = this;
 
   /**
-   * Get meta info for a given state.
-   * @param  {string} currentState
-   * @return {object}
-   */
-  this.getStateInfo = function(currentState) {};
-
-  /**
    * Get meta info for a given route.
    * @param  {string} currentRoute
    * @return {object}
    */
-  this.getRouteInfo = function(currentRoute) {
+  this.getInfo = function(currentRoute) {
     var placeholders       = {}
       , currentRoutePaths  = this._pathToArray(currentRoute);
 
@@ -124,18 +117,33 @@ var Parser = function(routes) {
    * @param  {array} routes
    * @return {object} this
    */
-  this._normalizeRoutes = function(routes) {
-    routes.sort(function(a, b) {
+  this.sortRoutes = function() {
+    this._routes.sort(function(a, b) {
       return self._pathToArray(b.path).length - self._pathToArray(a.path).length;
     });
     return this;
   };
 
+  /**
+   * Replace all state paths w/ their url paths.
+   * @return {object} this
+   */
+  this.normalizeStates = function($state) {
+    for (var i=0,len=this._routes.length; i<len; i+=1) {
+      var state = this._routes[i].path;
+      // If the state is actully a state.
+      if (state.indexOf('/') !== 0 && state.indexOf(':') === -1 && state.indexOf('*') === -1) {
+        var stateUrl = $state.get(state).url;
+        if (stateUrl) this._routes[i].path = stateUrl;
+      }
+    }
+    return this;
+  };
+
   // Class constructor.
   (function() {
-    self._utils   = new Utils();
+    self._utils  = new Utils();
     self._routes = routes;
-    self._normalizeRoutes(routes);
   })();
 
 };
@@ -163,14 +171,15 @@ angular.module('meta', [])
    * @param {boolean} [uirouter]
    * @return {object} this
    */
-  var update = function($rootScope, $injector, uirouter) {
+  var update = function($rootScope, $location, uirouter) {
     var info = null;
-    if (uirouter) {
-      info = this._parser.getStateInfo($injector.get('$state'));
-    }
-    else {
-      info = this._parser.getRouteInfo($injector.get('$location').path());
-    }
+    // if (uirouter) {
+    //   info = this._parser.getStateInfo($injector.get('$state'));
+    // }
+    // else {
+    //   info = this._parser.getRouteInfo($injector.get('$location').path());
+    // }
+    info = this._parser.getInfo( $location.path() );
 
     if (info) {
       $rootScope.meta = info;
@@ -225,13 +234,10 @@ angular.module('meta', [])
     return this;
   };
 
-  this.$get = ['$rootScope', '$injector',
-  function($rootScope, $injector) {
+  this.$get = ['$rootScope', '$location', '$injector',
+  function($rootScope, $location, $injector) {
     return {
       init: function() {
-
-        // Initalize parser once all routes have been added.
-        self._parser = new Parser(routes);
 
         // Declare empty object on $rootScope.
         if ($rootScope.meta) {
@@ -239,16 +245,21 @@ angular.module('meta', [])
         }
         $rootScope.meta = {};
 
+        // Initalize parser once all routes have been added.
+        self._parser = new Parser(routes);
+
         // Listen for changes to the routes, update the meta info,
         // and trigger an event to the outside world.
         if (options.uirouter) {
+          self._parser.normalizeStates( $injector.get('$state') ).sortRoutes();
           $rootScope.$on('$stateChangeSuccess', function() {
-            update.call(self, $rootScope, $injector, options.uirouter);
+            update.call(self, $rootScope, $location, options.uirouter);
           });
         }
         else {
+          self._parser.sortRoutes();
           $rootScope.$on('$routeChangeSuccess', function() {
-            update.call(self, $rootScope, $injector, options.uirouter);
+            update.call(self, $rootScope, $location, options.uirouter);
           });
         }
 

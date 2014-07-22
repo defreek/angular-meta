@@ -7,18 +7,11 @@ var Parser = function(routes) {
   var self = this;
 
   /**
-   * Get meta info for a given state.
-   * @param  {string} currentState
-   * @return {object}
-   */
-  this.getStateInfo = function(currentState) {};
-
-  /**
    * Get meta info for a given route.
    * @param  {string} currentRoute
    * @return {object}
    */
-  this.getRouteInfo = function(currentRoute) {
+  this.getInfo = function(currentRoute) {
     var placeholders       = {}
       , currentRoutePaths  = this._pathToArray(currentRoute);
 
@@ -92,18 +85,33 @@ var Parser = function(routes) {
    * @param  {array} routes
    * @return {object} this
    */
-  this._normalizeRoutes = function(routes) {
-    routes.sort(function(a, b) {
+  this.sortRoutes = function() {
+    this._routes.sort(function(a, b) {
       return self._pathToArray(b.path).length - self._pathToArray(a.path).length;
     });
     return this;
   };
 
+  /**
+   * Replace all state paths w/ their url paths.
+   * @return {object} this
+   */
+  this.normalizeStates = function($state) {
+    for (var i=0,len=this._routes.length; i<len; i+=1) {
+      var state = this._routes[i].path;
+      // If the state is actully a state.
+      if (state.indexOf('/') !== 0 && state.indexOf(':') === -1 && state.indexOf('*') === -1) {
+        var stateUrl = $state.get(state).url;
+        if (stateUrl) this._routes[i].path = stateUrl;
+      }
+    }
+    return this;
+  };
+
   // Class constructor.
   (function() {
-    self._utils   = new Utils();
+    self._utils  = new Utils();
     self._routes = routes;
-    self._normalizeRoutes(routes);
   })();
 
 };

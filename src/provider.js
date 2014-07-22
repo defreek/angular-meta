@@ -22,14 +22,15 @@ angular.module('meta', [])
    * @param {boolean} [uirouter]
    * @return {object} this
    */
-  var update = function($rootScope, $injector, uirouter) {
+  var update = function($rootScope, $location, uirouter) {
     var info = null;
-    if (uirouter) {
-      info = this._parser.getStateInfo($injector.get('$state'));
-    }
-    else {
-      info = this._parser.getRouteInfo($injector.get('$location').path());
-    }
+    // if (uirouter) {
+    //   info = this._parser.getStateInfo($injector.get('$state'));
+    // }
+    // else {
+    //   info = this._parser.getRouteInfo($injector.get('$location').path());
+    // }
+    info = this._parser.getInfo( $location.path() );
 
     if (info) {
       $rootScope.meta = info;
@@ -84,13 +85,10 @@ angular.module('meta', [])
     return this;
   };
 
-  this.$get = ['$rootScope', '$injector',
-  function($rootScope, $injector) {
+  this.$get = ['$rootScope', '$location', '$injector',
+  function($rootScope, $location, $injector) {
     return {
       init: function() {
-
-        // Initalize parser once all routes have been added.
-        self._parser = new Parser(routes);
 
         // Declare empty object on $rootScope.
         if ($rootScope.meta) {
@@ -98,16 +96,21 @@ angular.module('meta', [])
         }
         $rootScope.meta = {};
 
+        // Initalize parser once all routes have been added.
+        self._parser = new Parser(routes);
+
         // Listen for changes to the routes, update the meta info,
         // and trigger an event to the outside world.
         if (options.uirouter) {
+          self._parser.normalizeStates( $injector.get('$state') ).sortRoutes();
           $rootScope.$on('$stateChangeSuccess', function() {
-            update.call(self, $rootScope, $injector, options.uirouter);
+            update.call(self, $rootScope, $location, options.uirouter);
           });
         }
         else {
+          self._parser.sortRoutes();
           $rootScope.$on('$routeChangeSuccess', function() {
-            update.call(self, $rootScope, $injector, options.uirouter);
+            update.call(self, $rootScope, $location, options.uirouter);
           });
         }
 
