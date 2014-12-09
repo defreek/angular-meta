@@ -128,7 +128,7 @@ angular.module('meta', [])
       return {
         init: function() {
           $rootScope.meta = {};
-          $rootScope.$on('$routeChangeSuccess', update);
+          $rootScope.$on('$locationChangeSuccess', update);
         },
         // Return current meta title and description.
         get: function() {
