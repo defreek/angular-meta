@@ -6,7 +6,8 @@ angular.module('meta', [])
     var routes = {};
     var otherwise = {
       title: '',
-      description: ''
+      description: '',
+      image: ''
     };
 
     /**
@@ -123,6 +124,7 @@ angular.module('meta', [])
         var info = getInfo( $location.path() );
         $rootScope.meta.title = self.options.title.prefix + info.title + self.options.title.suffix;
         $rootScope.meta.description = info.description;
+        $rootScope.meta.image = info.image;
       };
 
       return {
